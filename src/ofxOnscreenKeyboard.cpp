@@ -1,12 +1,11 @@
 #include "ofxOnscreenKeyboard.h"
 
 
-// spacebar
-// backspace
-// preview box
-// cosmetics + rounding
-// hide or not
-
+//--------------------------------------------------------------
+ofxOnscreenKey::ofxOnscreenKey(int row, int keyWidth) {
+    this->row = row;
+    this->keyWidth = keyWidth;
+}
 
 //--------------------------------------------------------------
 void ofxOnscreenKey::setKey(string key) {
@@ -16,35 +15,97 @@ void ofxOnscreenKey::setKey(string key) {
 
 //--------------------------------------------------------------
 void ofxOnscreenKey::setUpperCase(bool upper) {
-    setKey(upper ? ofToUpper(key) : ofToLower(key));
+    if (key == "ö" && upper) { setKey("Ö");
+    } else if (key == "Ö" && !upper) { setKey("ö");
+    } else if (key == "ü" && upper) { setKey("Ü");
+    } else if (key == "Ü" && !upper) { setKey("ü");
+    } else if (key == "ä" && upper) { setKey("Ä");
+    } else if (key == "Ä" && !upper) { setKey("ä");
+    } else { setKey(upper ? ofToUpper(key) : ofToLower(key)); }
 }
 
 //--------------------------------------------------------------
 ofxOnscreenKeyboard::ofxOnscreenKeyboard() {
     visible = true;
+    upper = false;
 }
 
 //--------------------------------------------------------------
-void ofxOnscreenKeyboard::setup() {
+void ofxOnscreenKeyboard::setMouseEventsAuto(bool automatic) {
+    if (automatic) {
+        ofAddListener(ofEvents().mouseMoved, this, &ofxOnscreenKeyboard::mouseMoved);
+        ofAddListener(ofEvents().mousePressed, this, &ofxOnscreenKeyboard::mousePressed);
+        ofAddListener(ofEvents().mouseDragged, this, &ofxOnscreenKeyboard::mouseDragged);
+        ofAddListener(ofEvents().mouseReleased, this, &ofxOnscreenKeyboard::mouseReleased);
+    }
+    else {
+        ofRemoveListener(ofEvents().mouseMoved, this, &ofxOnscreenKeyboard::mouseMoved);
+        ofRemoveListener(ofEvents().mousePressed, this, &ofxOnscreenKeyboard::mousePressed);
+        ofRemoveListener(ofEvents().mouseDragged, this, &ofxOnscreenKeyboard::mouseDragged);
+        ofRemoveListener(ofEvents().mouseReleased, this, &ofxOnscreenKeyboard::mouseReleased);
+    }
+}
 
-    font.load("verdana.ttf", 30);
-    
-    ofAddListener(ofEvents().mouseMoved, this, &ofxOnscreenKeyboard::mouseMoved);
-    ofAddListener(ofEvents().mousePressed, this, &ofxOnscreenKeyboard::mousePressed);
-    ofAddListener(ofEvents().mouseDragged, this, &ofxOnscreenKeyboard::mouseDragged);
-    ofAddListener(ofEvents().mouseReleased, this, &ofxOnscreenKeyboard::mouseReleased);
+//--------------------------------------------------------------
+ofxOnscreenKeyboard::~ofxOnscreenKeyboard() {
+    for (auto k : keys) {
+        delete k;
+    }
+    keys.clear();
+}
 
-    string keyStr[30] = {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", "X", "C", "V", "B", "N", "M", ".", " ", "^", "<"};
-    
-    for (int i=0; i<30; i++) {
-        ofxOnscreenKey *key = new ofxOnscreenKey();
-        key->setup(keyStr[i], 0, 0, 1, 1);
-        key->setKey(keyStr[i]);
+//--------------------------------------------------------------
+void ofxOnscreenKeyboard::addKeys(string keyRow, int row, int width) {
+    bool umlaut = false;
+    for (char & c : keyRow) {
+        string keyStr = ofToString(c);
+        if (keyStr == "\303") {
+            umlaut = true;
+            continue;
+        } else if (keyStr == "\274" && umlaut) {
+            keyStr = "ü";
+            umlaut = false;
+        } else if (keyStr == "\266" && umlaut) {
+            keyStr = "ö";
+            umlaut = false;
+        } else if (keyStr == "\244" && umlaut) {
+            keyStr = "ä";
+            umlaut = false;
+        }
+        ofxOnscreenKey *key = new ofxOnscreenKey(row, width);
+        key->setup(keyStr, 0, 0, 1, 1);
+        key->setKey(keyStr);
         key->setFont(&font);
         key->setBackgroundColor(ofColor::lightGray);
+        key->setBackgroundGradient(85);
+        key->setCornerRounded(10);
         keys.push_back(key);
         ofAddListener(key->clickEvent, this, &ofxOnscreenKeyboard::keyClicked);
     }
+}
+
+//--------------------------------------------------------------
+void ofxOnscreenKeyboard::setup(ofxOnscreenKeyboardLayout layout) {
+    this->layout = layout;
+    
+    tl.set(1e8, 1e8);
+    br.set(-1e8, -1e8);
+    
+    if (layout == LAYOUT_ENGLISH) {
+        addKeys(ofxOnscreenKeyboardUSEnglish[0], 0, 1);
+        addKeys(ofxOnscreenKeyboardUSEnglish[1], 1, 1);
+        addKeys(ofxOnscreenKeyboardUSEnglish[2], 2, 1);
+    }
+    else if (layout == LAYOUT_GERMAN) {
+        addKeys(ofxOnscreenKeyboardGerman[0], 0, 1);
+        addKeys(ofxOnscreenKeyboardGerman[1], 1, 1);
+        addKeys(ofxOnscreenKeyboardGerman[2], 2, 1);
+    }
+    addKeys("^", 3, 2);
+    addKeys(" ", 3, 7);
+    addKeys("<", 3, 2);
+    
+    setUpperCase(true);
 }
 
 //--------------------------------------------------------------
@@ -53,59 +114,65 @@ void ofxOnscreenKeyboard::setVisible(bool visible) {
 }
 
 //--------------------------------------------------------------
-void ofxOnscreenKeyboard::setPosition(int kX, int kY, int keyW, int keyH) {
+void ofxOnscreenKeyboard::setPosition(int kX, int kY, int keyW, int keyH, int fontSize, int margin) {
+    this->margin = margin;
+    font.load("verdana.ttf", fontSize, true, true);
     
+    vector<float> rowX = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    rowX[0] += 0 * keyW;
+    rowX[1] += 0.333 * keyW;
+    rowX[2] += 0.666 * keyW;
+    rowX[3] += 0.333 * keyW;
+    rowX[4] += 0 * keyW;
+    rowX[5] += 0.333 * keyW;
+    rowX[6] += 0.666 * keyW;
+    rowX[7] += 0.333 * keyW;
+    rowX[8] += 0 * keyW;
+    rowX[9] += 0.333 * keyW;
     
-    int margin = 10;
-    
-    ofVec2f tl(1e8, 1e8);
-    ofVec2f br(-1e8, -1e8);
-    
+    for (int i=0; i<keys.size(); i++) {
+        int r = keys[i]->row;
+        int w = keys[i]->keyWidth;
+        
+        int x = kX + rowX[r];
+        int y = kY + r * (keyH + margin);
 
-    
-    for (int i=0; i<30; i++) {
-        int x, y;
-        if (i < 10) {
-            x = kX + i * (keyW + margin);
-            y = kY;
-        } else if (i < 19) {
-            x = kX + (keyW * 0.333) + (i-10) * (keyW + margin);
-            y = kY + 1 * (keyH + margin);
-        } else if (i < 27) {
-            x = kX + (keyW * 0.666) + (i-19) * (keyW + margin);
-            y = kY + 2 * (keyH + margin);
-        } else if (i < 30) {
-            x = kX + (keyW * 0.0) + (i-27) * (keyW + margin);
-            y = kY + 3 * (keyH + margin);
+        rowX[r] += (w * keyW + margin);
+
+        keys[i]->resize(w * keyW, keyH);
+        
+        if (keys[i]->key == "<") {
+            keys[i]->loadIcon("backspace.png");
+        } else if (keys[i]->key == "^") {
+            keys[i]->loadIcon("shift.png");
         }
         
+        keys[i]->setPosition(x, y);
+
         tl.x = min(tl.x, (float) x);
         tl.y = min(tl.y, (float) y);
         br.x = max(br.x, (float) x + keyW);
         br.y = max(br.y, (float) y + keyH);
-
-        
-        if (keys[i]->getName() == " ") {
-            keys[i]->resize(keyW, keyH);
-            keys[i]->setPosition(x, y);
-        } else {
-            keys[i]->resize(keyW, keyH);
-            keys[i]->setPosition(x, y);
-        }
     }
     
     bgRect.set(tl.x - 2*margin, tl.y - 2*margin, br.x-tl.x + 4*margin, br.y-tl.y + 4*margin);
-    
-    
 }
 
 //--------------------------------------------------------------
 void ofxOnscreenKeyboard::draw() {
     if (!visible) return;
-    
+    int rectMargin = 5;
     ofPushStyle();
-    ofSetColor(0, 185);
-    ofDrawRectangle(bgRect);
+//    ofSetColor(0, 225);
+//    ofNoFill();
+//    ofSetLineWidth(rectMargin*2);
+//    ofDrawRectRounded(bgRect.getX()-rectMargin,
+//                      bgRect.getY()-rectMargin,
+//                      bgRect.getWidth()+2*rectMargin,
+//                      bgRect.getHeight()+2*rectMargin, 20);
+    ofFill();
+    ofSetColor(20, 185);
+    ofDrawRectRounded(bgRect, 20);
     ofSetColor(255);
     for (int i=0; i<keys.size(); i++) {
         keys[i]->draw();
@@ -115,6 +182,7 @@ void ofxOnscreenKeyboard::draw() {
 
 //--------------------------------------------------------------
 void ofxOnscreenKeyboard::setUpperCase(bool upper) {
+    this->upper = upper;
     for (int i=0; i<keys.size(); i++) {
         keys[i]->setUpperCase(upper);
     }
@@ -124,21 +192,18 @@ void ofxOnscreenKeyboard::setUpperCase(bool upper) {
 void ofxOnscreenKeyboard::keyClicked(string & key) {
     if (key=="<") {
         input = input.substr(0, input.size()-1);
+    } else if (key=="^") {
+        setUpperCase(!upper);
     } else {
         input += key;
+        bool toUpper = input.size() == 0 || input.substr(input.size()-1, input.size()) == " ";
+        setUpperCase(toUpper);
     }
-
-    bool toUpper = input.size() == 0 || input.substr(input.size()-1, input.size()) == " ";
-    setUpperCase(toUpper);
 }
 
 //--------------------------------------------------------------
-void ofxOnscreenKeyboard::drawInput() {
+void ofxOnscreenKeyboard::drawInput(int x, int y) {
     if (!visible) return;
-    
-    int x = 100;
-    int y = 100;
-    
     font.drawString(input, x, y);
 }
 
@@ -174,6 +239,4 @@ void ofxOnscreenKeyboard::mouseReleased(int x, int y) {
         keys[i]->mouseReleased(x, y);
     }
 }
-
-
 

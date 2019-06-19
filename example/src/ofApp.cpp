@@ -2,8 +2,9 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-    keyboard.setup();
-    keyboard.setPosition(100, 300, 80, 70);
+    keyboard.setup(LAYOUT_GERMAN);
+    keyboard.setPosition(50, 200, 80, 70, 30, 10);
+    keyboard.setMouseEventsAuto(true);
 }
 
 //--------------------------------------------------------------
@@ -14,12 +15,16 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
     keyboard.draw();    
-    keyboard.drawInput();
+    
+    string input = keyboard.getInput();
+    ofDrawBitmapString(input, 20, 50);
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+    if (key==' ') {
+        keyboard.toggleVisible();
+    }
 }
 
 //--------------------------------------------------------------
