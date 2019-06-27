@@ -28,6 +28,7 @@ void ofxOnscreenKey::setUpperCase(bool upper) {
 ofxOnscreenKeyboard::ofxOnscreenKeyboard() {
     visible = true;
     upper = false;
+    characterLimit = 1e8;
 }
 
 //--------------------------------------------------------------
@@ -195,7 +196,9 @@ void ofxOnscreenKeyboard::keyClicked(string & key) {
     } else if (key=="^") {
         setUpperCase(!upper);
     } else {
-        input += key;
+        if (input.size() < characterLimit) {
+            input += key;
+        }
         bool toUpper = input.size() == 0 || input.substr(input.size()-1, input.size()) == " ";
         setUpperCase(toUpper);
     }
@@ -208,35 +211,38 @@ void ofxOnscreenKeyboard::drawInput(int x, int y) {
 }
 
 //--------------------------------------------------------------
-void ofxOnscreenKeyboard::mouseMoved(int x, int y) {
-    if (!visible) return;
+bool ofxOnscreenKeyboard::mouseMoved(int x, int y) {
+    if (!visible) return false;
     for (int i=0; i<keys.size(); i++) {
         keys[i]->mouseMoved(x, y);
     }
+    return bgRect.inside(x, y);
 }
 
 //--------------------------------------------------------------
-void ofxOnscreenKeyboard::mouseDragged(int x, int y) {
-    if (!visible) return;
+bool ofxOnscreenKeyboard::mouseDragged(int x, int y) {
+    if (!visible) return false;
     for (int i=0; i<keys.size(); i++) {
         keys[i]->mouseDragged(x, y);
     }
-
+    return bgRect.inside(x, y);
 }
 
 //--------------------------------------------------------------
-void ofxOnscreenKeyboard::mousePressed(int x, int y) {
-    if (!visible) return;
+bool ofxOnscreenKeyboard::mousePressed(int x, int y) {
+    if (!visible) return false;
     for (int i=0; i<keys.size(); i++) {
         keys[i]->mousePressed(x, y);
     }
+    return bgRect.inside(x, y);
 }
 
 //--------------------------------------------------------------
-void ofxOnscreenKeyboard::mouseReleased(int x, int y) {
-    if (!visible) return;
+bool ofxOnscreenKeyboard::mouseReleased(int x, int y) {
+    if (!visible) return false;
     for (int i=0; i<keys.size(); i++) {
         keys[i]->mouseReleased(x, y);
     }
+    return bgRect.inside(x, y);
 }
 

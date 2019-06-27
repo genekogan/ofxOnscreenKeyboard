@@ -37,6 +37,7 @@ public:
     ~ofxOnscreenKeyboard();
 
     void setup(ofxOnscreenKeyboardLayout layout);
+    void setCharacterLimit(int characterLimit) {this->characterLimit = characterLimit;}
     void setPosition(int kX, int kY, int keyW, int keyH, int fontSize, int margin);
     void setMouseEventsAuto(bool automatic);
     
@@ -49,10 +50,10 @@ public:
     void draw();
     void drawInput(int x, int y);
   
-    void mouseMoved(int x, int y);
-    void mouseDragged(int x, int y);
-    void mousePressed(int x, int y);
-    void mouseReleased(int x, int y);
+    bool mouseMoved(int x, int y);
+    bool mouseDragged(int x, int y);
+    bool mousePressed(int x, int y);
+    bool mouseReleased(int x, int y);
     
     void mouseMoved(ofMouseEventArgs & evt) {mouseMoved(evt.x, evt.y);}
     void mouseDragged(ofMouseEventArgs & evt) {mouseDragged(evt.x, evt.y);}
@@ -76,6 +77,7 @@ protected:
     int margin;
     bool upper;
     bool visible;
+    int characterLimit;
 };
 
 
