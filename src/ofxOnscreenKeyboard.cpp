@@ -15,13 +15,13 @@ void ofxOnscreenKey::setKey(string key) {
 
 //--------------------------------------------------------------
 void ofxOnscreenKey::setUpperCase(bool upper) {
-    if (key == "ö" && upper) { setKey("Ö");
-    } else if (key == "Ö" && !upper) { setKey("ö");
-    } else if (key == "ü" && upper) { setKey("Ü");
-    } else if (key == "Ü" && !upper) { setKey("ü");
-    } else if (key == "ä" && upper) { setKey("Ä");
-    } else if (key == "Ä" && !upper) { setKey("ä");
-    } else { setKey(upper ? ofToUpper(key) : ofToLower(key)); }
+    if (key == "ö" && upper) { setKey("Ö"); }
+    else if (key == "Ö" && !upper) { setKey("ö"); }
+    else if (key == "ü" && upper) { setKey("Ü"); }
+    else if (key == "Ü" && !upper) { setKey("ü"); }
+    else if (key == "ä" && upper) { setKey("Ä"); }
+    else if (key == "Ä" && !upper) { setKey("ä"); }
+    else { setKey(upper ? ofToUpper(key) : ofToLower(key)); }
 }
 
 //--------------------------------------------------------------
