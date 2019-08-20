@@ -190,6 +190,12 @@ void ofxOnscreenKeyboard::setUpperCase(bool upper) {
 }
 
 //--------------------------------------------------------------
+void ofxOnscreenKeyboard::clearInput() {
+    input="";
+    setUpperCase(true);
+}
+
+//--------------------------------------------------------------
 void ofxOnscreenKeyboard::keyClicked(string & key) {
     if (key=="<") {
         input = input.substr(0, input.size()-1);

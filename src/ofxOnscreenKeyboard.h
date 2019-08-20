@@ -43,7 +43,7 @@ public:
     
     void addKeys(string keys, int row, int width);
     void setUpperCase(bool upper);
-    void clearInput() {input="";}
+    void clearInput();
     
     string getInput() {return input;}
     
